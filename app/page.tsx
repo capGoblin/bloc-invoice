@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ethers } from "ethers";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, PDFFont, RGB } from "pdf-lib";
 
 // Add this interface near the top of your file, after the imports
 interface InvoiceMetadata {
@@ -115,31 +115,57 @@ export default function Home() {
   const generatePDF = async (formData: any, transactionDetails: any) => {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage();
-    const { height } = page.getSize();
+    const { width, height } = page.getSize();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const fontSize = 12;
     const padding = 50;
 
-    const drawText = (text: string, y: number) => {
+    // Function to draw text
+    const drawText = (
+      text: string,
+      y: number,
+      options: { font?: PDFFont; size?: number; color?: RGB } = {}
+    ) => {
+      const {
+        font: textFont = font,
+        size = fontSize,
+        color = rgb(0, 0, 0),
+      } = options;
       page.drawText(text, {
         x: padding,
         y: height - padding - y,
-        size: fontSize,
-        font: font,
-        color: rgb(0, 0, 0),
+        size: size,
+        font: textFont,
+        color: color,
       });
     };
 
-    drawText("Invoice", 20);
-    drawText(`Business Name: ${formData.businessName}`, 40);
-    drawText(`Transaction Hash: ${formData.transactionHash}`, 60);
-    drawText(`Invoice Date: ${formData.invoiceDate}`, 80);
-    drawText(`Customer: ${transactionDetails.customer}`, 100);
-    drawText(`Product Name: ${formData.productName}`, 120);
-    drawText(`Category: ${formData.category}`, 140);
-    drawText(`Quantity: ${formData.quantity}`, 160);
-    drawText(`Amount: ${transactionDetails.amount} ETH`, 180);
-    drawText(`Network: ${formData.network}`, 200);
+    // Draw the "Invoice" heading
+    const headingText = "Invoice";
+    const headingFontSize = 24;
+    const headingWidth = boldFont.widthOfTextAtSize(
+      headingText,
+      headingFontSize
+    );
+    page.drawText(headingText, {
+      x: (width - headingWidth) / 2,
+      y: height - padding - 30,
+      size: headingFontSize,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+
+    // Draw the rest of the invoice details
+    drawText(`Business Name: ${formData.businessName}`, 70);
+    drawText(`Transaction Hash: ${formData.transactionHash}`, 90);
+    drawText(`Invoice Date: ${formData.invoiceDate}`, 110);
+    drawText(`Customer: ${transactionDetails.customer}`, 130);
+    drawText(`Product Name: ${formData.productName}`, 150);
+    drawText(`Category: ${formData.category}`, 170);
+    drawText(`Quantity: ${formData.quantity}`, 190);
+    drawText(`Amount: ${transactionDetails.amount} ETH`, 210);
+    drawText(`Network: ${formData.network}`, 230);
 
     // Create JSON data to store in the PDF metadata
     const jsonData: InvoiceMetadata = {
