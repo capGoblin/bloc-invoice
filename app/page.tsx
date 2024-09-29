@@ -115,7 +115,7 @@ export default function Home() {
   const generatePDF = async (formData: any, transactionDetails: any) => {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage();
-    const { width, height } = page.getSize();
+    const { height } = page.getSize();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontSize = 12;
     const padding = 50;
